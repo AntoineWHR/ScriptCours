@@ -187,15 +187,19 @@ show_level() {
     
     show_banner
     echo -e "${BLUE}═══ NIVEAU $level/25 ═══${NC}\n"
+    echo -e "${GREEN}Vous êtes dans:${NC} $GAME_DIR"
+    echo ""
     
     case $level in
         1)
-            echo -e "${YELLOW}Objectif:${NC} Afficher le contenu du fichier flag1.txt"
+            echo -e "${YELLOW}Objectif:${NC} Afficher le contenu du fichier flag1.txt (il est dans ce dossier)"
             echo -e "${CYAN}Indice:${NC} Il existe une commande pour conCATéner et afficher des fichiers"
+            echo -e "${CYAN}Astuce:${NC} Tapez 'ls' pour voir les fichiers disponibles"
             ;;
         2)
             echo -e "${YELLOW}Objectif:${NC} Lister les fichiers du dossier niveau2 et trouver le flag"
             echo -e "${CYAN}Indice:${NC} Comment faire pour LiSter le contenu d'un répertoire?"
+            echo -e "${CYAN}Astuce:${NC} Vous pouvez lister un dossier avec: ls nom_dossier/"
             ;;
         3)
             echo -e "${YELLOW}Objectif:${NC} Naviguer dans niveau3/dossier_cache et lire le flag"
@@ -293,7 +297,8 @@ show_level() {
     esac
     
     echo ""
-    echo -e "${GREEN}Entrez le flag trouvé (format: FLAG{...}) ou 'hint' pour un indice:${NC}"
+    echo -e "${GREEN}Entrez le flag trouvé (format: FLAG{...})${NC}"
+    echo -e "${CYAN}Commandes spéciales: 'shell' pour explorer, 'hint' pour un indice${NC}"
 }
 
 check_flag() {
@@ -342,8 +347,8 @@ main() {
         echo -e "${YELLOW}Lancement de l'initialisation...${NC}"
         init_game
         echo ""
-        echo -e "${GREEN}Maintenant, allez dans le dossier du jeu:${NC}"
-        echo "cd $GAME_DIR"
+        echo -e "${GREEN}Maintenant, relancez le script:${NC}"
+        echo "./wargame.sh"
         exit 0
     fi
     
@@ -360,27 +365,47 @@ main() {
         exit 0
     fi
     
-    show_level $current_level
-    
-    read -r flag
-    
-    if [ "$flag" = "hint" ]; then
-        echo -e "${CYAN}Relisez bien les indices ci-dessus! 😉${NC}"
-        sleep 2
-        main
-        return
-    fi
-    
-    if check_flag $current_level "$flag"; then
-        echo -e "${GREEN}✓ CORRECT! Passage au niveau suivant...${NC}"
-        update_level $((current_level + 1))
-        sleep 2
-        main
-    else
-        echo -e "${RED}✗ Incorrect! Réessayez.${NC}"
-        sleep 2
-        main
-    fi
+    while true; do
+        show_level $current_level
+        
+        read -r input
+        
+        # Commande shell
+        if [ "$input" = "shell" ]; then
+            echo -e "${CYAN}=== MODE SHELL INTERACTIF ===${NC}"
+            echo -e "${CYAN}Explorez librement! Tapez 'exit' pour revenir au jeu${NC}"
+            echo ""
+            bash
+            continue
+        fi
+        
+        # Hint
+        if [ "$input" = "hint" ]; then
+            echo -e "${CYAN}Relisez bien les indices ci-dessus! 😉${NC}"
+            sleep 2
+            continue
+        fi
+        
+        # Vérification du flag
+        if check_flag $current_level "$input"; then
+            echo -e "${GREEN}✓ CORRECT! Passage au niveau suivant...${NC}"
+            current_level=$((current_level + 1))
+            update_level $current_level
+            sleep 2
+            
+            if [ $current_level -gt 25 ]; then
+                show_banner
+                echo -e "${GREEN}╔═══════════════════════════════════════════════╗${NC}"
+                echo -e "${GREEN}║  FÉLICITATIONS! Vous avez terminé le jeu!     ║${NC}"
+                echo -e "${GREEN}║  Vous maîtrisez maintenant les bases de Linux ║${NC}"
+                echo -e "${GREEN}╚═══════════════════════════════════════════════╝${NC}"
+                exit 0
+            fi
+        else
+            echo -e "${RED}✗ Incorrect! Réessayez.${NC}"
+            sleep 2
+        fi
+    done
 }
 
 # Point d'entrée
